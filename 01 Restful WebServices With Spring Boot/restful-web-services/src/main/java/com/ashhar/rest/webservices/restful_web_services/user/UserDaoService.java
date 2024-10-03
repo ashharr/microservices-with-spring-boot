@@ -14,7 +14,7 @@ public class UserDaoService {
 	
 	private static List<User> users = new ArrayList<>();
 	
-	private static Long usersCount = (long) 0;
+	private static Integer usersCount = 0;
 	
 	
 	static {
@@ -29,7 +29,7 @@ public class UserDaoService {
 		return users;
 	}
 	
-	public User findOne(Long id){
+	public User findOne(Integer id){
 		Predicate<? super User> predicate = user -> user.getId().equals(id);
 		User foundUser = users.stream().filter(predicate).findFirst().orElse(null);
 		if(foundUser == null) {
@@ -45,7 +45,7 @@ public class UserDaoService {
 		return user;
 	}
 
-	public void deleteById(Long id) {
+	public void deleteById(Integer id) {
 		Predicate<? super User> predicate = user -> user.getId().equals(id);
 		boolean foundUser = users.removeIf(predicate);
 		if(!foundUser) {

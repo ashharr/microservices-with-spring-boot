@@ -2,6 +2,7 @@ package com.ashhar.rest.webservices.restful_web_services.user;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.hateoas.EntityModel;
@@ -17,31 +18,34 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.ashhar.rest.webservices.restful_web_services.jpa.UserRepository;
+
 import jakarta.validation.Valid;
 
 @RestController
-public class UserController {
-
-	private UserDaoService service;
+public class UserJpaController {
 	
-	public UserController(UserDaoService service) {
-		this.service = service;
+	private UserRepository userRepository;
+	
+	public UserJpaController( UserRepository userRepository) {
+		this.userRepository = userRepository;
 	}
 	
-	@GetMapping("/users")
+	@GetMapping("/jpa/users")
 	public List<User> getUsers(){
-		return service.findAll();
+		return userRepository.findAll();
 	}
 	
-	@GetMapping("/users/{id}")
+	@GetMapping("/jpa/users/{id}")
 	public EntityModel<User> getUserById(@PathVariable Integer id){
 		
-		User user = service.findOne(id);
+		Optional<User> user = userRepository.findById(id);
+
 		
-		if(user==null)
+		if(user.isEmpty())
 			throw new UserNotFoundException("id:"+id);
 		
-		EntityModel<User> entityModel = EntityModel.of(user);
+		EntityModel<User> entityModel = EntityModel.of(user.get());
 		
 		WebMvcLinkBuilder link = linkTo(methodOn(this.getClass()).getUsers());
 				
@@ -50,9 +54,9 @@ public class UserController {
 		return entityModel;
 	}
 	
-	@PostMapping("/users")
+	@PostMapping("/jpa/users")
 	public ResponseEntity<User> postUser(@Valid @RequestBody User user){
-		User savedUser = service.save(user);
+		User savedUser = userRepository.save(user);
 		
 		URI Location = ServletUriComponentsBuilder.fromCurrentRequest()
 													.path("/{id}")
@@ -63,10 +67,23 @@ public class UserController {
 	}
 	
 	@ResponseStatus(code = HttpStatus.NO_CONTENT)
-	@DeleteMapping("/users/{id}")
+	@DeleteMapping("/jpa/users/{id}")
 	public void  postUser(@PathVariable Integer id){
-		service.deleteById(id);
+		userRepository.deleteById(id);
 	}
 	
+	
+	@GetMapping("/jpa/users/{id}/post")
+	public List<Post>  getPostForUser(@PathVariable Integer id){
+		
+
+		Optional<User> user = userRepository.findById(id);
+
+		
+		if(user.isEmpty())
+			throw new UserNotFoundException("id:"+id);
+		
+		return user.get().getPost();
+	}
 	
 }
