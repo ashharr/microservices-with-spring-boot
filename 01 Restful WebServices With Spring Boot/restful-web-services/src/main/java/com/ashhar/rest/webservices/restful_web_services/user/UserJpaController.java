@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.ashhar.rest.webservices.restful_web_services.jpa.PostRepository;
 import com.ashhar.rest.webservices.restful_web_services.jpa.UserRepository;
 
 import jakarta.validation.Valid;
@@ -27,8 +28,11 @@ public class UserJpaController {
 	
 	private UserRepository userRepository;
 	
-	public UserJpaController( UserRepository userRepository) {
+	private PostRepository postRepository;
+	
+	public UserJpaController( UserRepository userRepository, PostRepository postRepository) {
 		this.userRepository = userRepository;
+		this.postRepository = postRepository;
 	}
 	
 	@GetMapping("/jpa/users")
@@ -56,6 +60,7 @@ public class UserJpaController {
 	
 	@PostMapping("/jpa/users")
 	public ResponseEntity<User> postUser(@Valid @RequestBody User user){
+		
 		User savedUser = userRepository.save(user);
 		
 		URI Location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -73,7 +78,7 @@ public class UserJpaController {
 	}
 	
 	
-	@GetMapping("/jpa/users/{id}/post")
+	@GetMapping("/jpa/users/{id}/posts")
 	public List<Post>  getPostForUser(@PathVariable Integer id){
 		
 
@@ -84,6 +89,42 @@ public class UserJpaController {
 			throw new UserNotFoundException("id:"+id);
 		
 		return user.get().getPost();
+	}
+	
+	
+	@PostMapping("/jpa/users/{id}/posts")
+	public ResponseEntity<Object>  addPostForUser(@PathVariable Integer id, @RequestBody @Valid Post post ){
+		
+		Optional<User> user = userRepository.findById(id);
+
+		if(user.isEmpty())
+			throw new UserNotFoundException("id:"+id);
+			
+		post.setUser(user.get());
+		
+		Post savedPost = postRepository.save(post);
+		
+		URI Location = ServletUriComponentsBuilder.fromCurrentRequest()
+				.path("/{id}")
+				.buildAndExpand(savedPost.getId())
+				.toUri();
+		
+		return ResponseEntity.created(Location ).build();
+
+	}
+	
+	
+	@GetMapping("/jpa/users/{id}/posts/{postId}")
+	public Post getPostByIdForUser(@PathVariable Integer id, @PathVariable Integer postId){
+		
+
+		Optional<User> user = userRepository.findById(id);
+		Optional<Post> post = postRepository.findById(postId);
+		
+		if(user.isEmpty() | post.isEmpty())
+			throw new UserNotFoundException("id:"+id);
+		
+		return post.get();
 	}
 	
 }
